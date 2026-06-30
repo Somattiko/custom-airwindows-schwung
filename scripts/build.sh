@@ -95,6 +95,12 @@ if [ -d "plugins" ] && [ "$(ls -A plugins/*.clap 2>/dev/null)" ]; then
     done
 fi
 
+# Copy plugin allowlist (if present) so it ships inside the tarball
+if [ -f "plugins/allowlist.txt" ]; then
+    echo "Copying allowlist.txt..."
+    cat "plugins/allowlist.txt" > "dist/clap/plugins/allowlist.txt"
+fi
+
 # Copy license files
 if [ -f "LICENSE" ]; then
     cat LICENSE > dist/clap/LICENSE

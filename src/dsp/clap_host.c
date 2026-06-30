@@ -241,6 +241,42 @@ static const char *skip_name_separators(const char *s) {
     return s;
 }
 
+/* --- BoomBap + Ambient curated subset ----------------------------------
+ * Only plugins listed here will be exposed by the host. Edit this list to
+ * curate your own subset; names must match the bare Airwindows plugin name
+ * (case-insensitive), i.e. without the "Airwindows: " prefix.
+ * ------------------------------------------------------------------------- */
+static const char *k_allowed_plugins[] = {
+    /* Boom bap: tape/console warmth, dirt, punch, lo-fi */
+    "ToTape5",
+    "Console6Channel",
+    "PurestDrive",
+    "Density",
+    "GrooveWear",
+    "HipCrush",
+    "DrumSlam",
+    "Pop",
+    "ButterComp2",
+    "Loud",
+    "Capacitor",
+    "BassKit",
+    "PocketVerbs",
+    "TapeDelay",
+    "Flutter",
+    /* Ambient: space, shimmer, texture */
+    "Galactic",
+    "Galactic2",
+    "kCathedral",
+    "kPlateA",
+    "Infinity",
+    "Chamber",
+    "StereoEnsemble",
+    "Ensemble",
+    "PurestEcho",
+    "Air",
+};
+#define K_ALLOWED_PLUGINS_COUNT (sizeof(k_allowed_plugins) / sizeof(k_allowed_plugins[0]))
+
 static const char *extract_airwindows_plugin_name(const char *name) {
     if (!name) return NULL;
 
@@ -250,6 +286,19 @@ static const char *extract_airwindows_plugin_name(const char *name) {
     name += strlen("airwindows");
     name = skip_name_separators(name);
     return *name ? name : NULL;
+}
+
+/* Returns 1 if the plugin should be exposed by the host, 0 to skip it.
+ * Non-Airwindows plugins (no "Airwindows: " prefix, e.g. other .clap files
+ * dropped into plugins/) are always allowed through unfiltered. */
+static int is_plugin_allowed(const char *full_name) {
+    const char *bare = extract_airwindows_plugin_name(full_name);
+    if (!bare) return 1; /* not an Airwindows plugin name, don't filter it */
+
+    for (size_t i = 0; i < K_ALLOWED_PLUGINS_COUNT; i++) {
+        if (ascii_casecmp(bare, k_allowed_plugins[i]) == 0) return 1;
+    }
+    return 0;
 }
 
 static int lookup_airwindows_category_name(const char *plugin_name, char *category, int category_len) {
@@ -372,6 +421,7 @@ static int scan_clap_file(const char *path, clap_host_list_t *list) {
     for (uint32_t i = 0; i < count; i++) {
         const clap_plugin_descriptor_t *desc = factory->get_plugin_descriptor(factory, i);
         if (!desc) continue;
+        if (!is_plugin_allowed(desc->name)) continue;
 
         clap_plugin_info_t info = {0};
         strncpy(info.id, desc->id ? desc->id : "", sizeof(info.id) - 1);

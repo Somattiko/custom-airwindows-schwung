@@ -241,42 +241,6 @@ static const char *skip_name_separators(const char *s) {
     return s;
 }
 
-/* --- BoomBap + Ambient curated subset ----------------------------------
- * Only plugins listed here will be exposed by the host. Edit this list to
- * curate your own subset; names must match the bare Airwindows plugin name
- * (case-insensitive), i.e. without the "Airwindows: " prefix.
- * ------------------------------------------------------------------------- */
-static const char *k_allowed_plugins[] = {
-    /* Boom bap: tape/console warmth, dirt, punch, lo-fi */
-    "ToTape5",
-    "Console6Channel",
-    "PurestDrive",
-    "Density",
-    "GrooveWear",
-    "HipCrush",
-    "DrumSlam",
-    "Pop",
-    "ButterComp2",
-    "Loud",
-    "Capacitor",
-    "BassKit",
-    "PocketVerbs",
-    "TapeDelay",
-    "Flutter",
-    /* Ambient: space, shimmer, texture */
-    "Galactic",
-    "Galactic2",
-    "kCathedral",
-    "kPlateA",
-    "Infinity",
-    "Chamber",
-    "StereoEnsemble",
-    "Ensemble",
-    "PurestEcho",
-    "Air",
-};
-#define K_ALLOWED_PLUGINS_COUNT (sizeof(k_allowed_plugins) / sizeof(k_allowed_plugins[0]))
-
 static const char *extract_airwindows_plugin_name(const char *name) {
     if (!name) return NULL;
 
@@ -288,15 +252,68 @@ static const char *extract_airwindows_plugin_name(const char *name) {
     return *name ? name : NULL;
 }
 
-/* Returns 1 if the plugin should be exposed by the host, 0 to skip it.
- * Non-Airwindows plugins (no "Airwindows: " prefix, e.g. other .clap files
- * dropped into plugins/) are always allowed through unfiltered. */
-static int is_plugin_allowed(const char *full_name) {
-    const char *bare = extract_airwindows_plugin_name(full_name);
-    if (!bare) return 1; /* not an Airwindows plugin name, don't filter it */
+/* --- Curated allowlist (plugins/allowlist.txt) --------------------------
+ * If a file named "allowlist.txt" exists in the plugins directory, only
+ * Airwindows plugins whose bare name (without "Airwindows: " prefix)
+ * appears in it, one per line, will be exposed to the UI. Lines starting
+ * with '#' and blank lines are ignored. Comparison is case-insensitive.
+ * If the file is missing or empty, ALL plugins are shown (default,
+ * unfiltered behavior) -- so this is fully backwards compatible.
+ * Non-Airwindows plugins (other .clap files dropped in plugins/) are
+ * never filtered by this mechanism.
+ * ------------------------------------------------------------------------- */
+#define MAX_ALLOWLIST_ENTRIES 600
+#define MAX_ALLOWLIST_NAME_LEN 64
 
-    for (size_t i = 0; i < K_ALLOWED_PLUGINS_COUNT; i++) {
-        if (ascii_casecmp(bare, k_allowed_plugins[i]) == 0) return 1;
+static char s_allowlist[MAX_ALLOWLIST_ENTRIES][MAX_ALLOWLIST_NAME_LEN];
+static size_t s_allowlist_count = 0;
+static int s_allowlist_loaded = 0; /* loaded at least once this run */
+
+static void trim(char *s) {
+    /* Trim trailing CR/LF/whitespace */
+    size_t len = strlen(s);
+    while (len > 0 && isspace((unsigned char)s[len - 1])) s[--len] = '\0';
+    /* Trim leading whitespace */
+    char *start = s;
+    while (*start && isspace((unsigned char)*start)) start++;
+    if (start != s) memmove(s, start, strlen(start) + 1);
+}
+
+static void load_allowlist(const char *plugins_dir) {
+    s_allowlist_count = 0;
+    s_allowlist_loaded = 1;
+
+    char path[1280];
+    snprintf(path, sizeof(path), "%s/allowlist.txt", plugins_dir);
+
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        fprintf(stderr, "[CLAP] No allowlist.txt found in %s, showing all plugins\n", plugins_dir);
+        return;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), f) && s_allowlist_count < MAX_ALLOWLIST_ENTRIES) {
+        trim(line);
+        if (line[0] == '\0' || line[0] == '#') continue;
+        strncpy(s_allowlist[s_allowlist_count], line, MAX_ALLOWLIST_NAME_LEN - 1);
+        s_allowlist[s_allowlist_count][MAX_ALLOWLIST_NAME_LEN - 1] = '\0';
+        s_allowlist_count++;
+    }
+    fclose(f);
+
+    fprintf(stderr, "[CLAP] Loaded allowlist.txt: %zu plugin(s) allowed\n", s_allowlist_count);
+}
+
+/* Returns 1 if the plugin should be exposed by the host, 0 to skip it. */
+static int is_plugin_allowed(const char *full_name) {
+    if (s_allowlist_count == 0) return 1; /* no allowlist loaded -> show everything */
+
+    const char *bare = extract_airwindows_plugin_name(full_name);
+    if (!bare) return 1; /* not an Airwindows plugin, never filtered */
+
+    for (size_t i = 0; i < s_allowlist_count; i++) {
+        if (ascii_casecmp(bare, s_allowlist[i]) == 0) return 1;
     }
     return 0;
 }
@@ -467,6 +484,8 @@ int clap_scan_plugins(const char *dir, clap_host_list_t *out) {
         s_main_thread = pthread_self();
         s_main_thread_set = 1;
     }
+
+    load_allowlist(dir);
 
     /* Add plugins directory to LD_LIBRARY_PATH so plugins can find bundled libs */
     const char *current_path = getenv("LD_LIBRARY_PATH");

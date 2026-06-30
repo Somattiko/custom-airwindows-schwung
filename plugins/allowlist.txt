@@ -2,32 +2,46 @@
 # Una línea por nombre de plugin (sin el prefijo "Airwindows: ").
 # Líneas vacías o que empiecen con # se ignoran.
 # Si este archivo se borra o se vacía, vuelven a mostrarse los 509.
+#
+# Nota: cuando un plugin tenía variantes numeradas (Density/Density2/Density3,
+# Tube/Tube2, Galactic/Galactic2/Galactic3, kCathedral...5, etc.) solo se
+# dejó la numeración más alta. La familia "Console" (4/5/6/7/8/9) en realidad
+# son consolas DISTINTAS, no versiones iterativas -- se dejó solo Console9
+# por simplicidad, siguiendo tu pedido, aunque pierdes variedad real de
+# sonido (no es "Console9 es mejor que Console4", son diferentes hardwares).
 
 # --- Boom bap: calidez, dirt, punch, lo-fi ---
-ToTape5
-Console6Channel
+ToTape9
+Console9Channel
 PurestDrive
-Density
+Density3
 GrooveWear
 HipCrush
 DrumSlam
-Pop
+Pop3
 ButterComp2
 Loud
-Capacitor
+Capacitor2
 BassKit
 PocketVerbs
-TapeDelay
-Flutter
+TapeDelay2
+Flutter2
+VariMu
+Mojo
+DustBunny
+Tube2
 
 # --- Ambient: espacio, textura ---
-Galactic
-Galactic2
-kCathedral
+Galactic3
+kCathedral5
 kPlateA
-Infinity
-Chamber
+Infinity2
+Chamber2
 StereoEnsemble
 Ensemble
 PurestEcho
-Air
+Air4
+MatrixVerb
+Verbity2
+ChorusEnsemble
+NonlinearSpace

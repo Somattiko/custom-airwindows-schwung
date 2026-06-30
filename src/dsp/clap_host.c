@@ -308,12 +308,17 @@ static void load_allowlist(const char *plugins_dir) {
 /* Returns 1 if the plugin should be exposed by the host, 0 to skip it. */
 static int is_plugin_allowed(const char *full_name) {
     if (s_allowlist_count == 0) return 1; /* no allowlist loaded -> show everything */
+    if (!full_name) return 1;
 
+    /* Some builds expose "Airwindows: <Name>", others expose just "<Name>".
+     * Try the prefixed form first, then fall back to the raw name. */
     const char *bare = extract_airwindows_plugin_name(full_name);
-    if (!bare) return 1; /* not an Airwindows plugin, never filtered */
+    const char *candidate = bare ? bare : full_name;
+
+    while (*candidate && isspace((unsigned char)*candidate)) candidate++;
 
     for (size_t i = 0; i < s_allowlist_count; i++) {
-        if (ascii_casecmp(bare, s_allowlist[i]) == 0) return 1;
+        if (ascii_casecmp(candidate, s_allowlist[i]) == 0) return 1;
     }
     return 0;
 }

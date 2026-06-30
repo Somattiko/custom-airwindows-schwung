@@ -2,7 +2,7 @@
   "id": "clap",
   "name": "Airwindows (curated)",
   "abbrev": "AWC",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Airwindows effects, filtered via plugins/allowlist.txt (edit it to choose your own subset)",
   "author": "charlesvestal, Chris Johnson (Airwindows); curated fork",
   "license": "MIT",

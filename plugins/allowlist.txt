@@ -1,0 +1,33 @@
+# Airwindows BoomBap + Ambient — lista de plugins permitidos
+# Una línea por nombre de plugin (sin el prefijo "Airwindows: ").
+# Líneas vacías o que empiecen con # se ignoran.
+# Si este archivo se borra o se vacía, vuelven a mostrarse los 509.
+
+# --- Boom bap: calidez, dirt, punch, lo-fi ---
+ToTape5
+Console6Channel
+PurestDrive
+Density
+GrooveWear
+HipCrush
+DrumSlam
+Pop
+ButterComp2
+Loud
+Capacitor
+BassKit
+PocketVerbs
+TapeDelay
+Flutter
+
+# --- Ambient: espacio, textura ---
+Galactic
+Galactic2
+kCathedral
+kPlateA
+Infinity
+Chamber
+StereoEnsemble
+Ensemble
+PurestEcho
+Air
